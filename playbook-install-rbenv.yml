@@ -1,0 +1,46 @@
+-
+  name: Install rbenv
+  hosts: target1
+  tasks:
+    - name: Ping test
+      ping:
+    - name: Run the equivalent of "apt-get update"
+      apt:
+        update_cache: yes
+      become: yes
+    - name: Install dependency library
+      apt:
+        pkg:
+        - git
+        - curl
+        - libssl-dev
+        - libreadline-dev
+        - zlib1g-dev
+        - autoconf
+        - bison
+        - build-essential
+        - libyaml-dev
+        - libreadline-dev
+        - libncurses5-dev
+        - libffi-dev
+        - libgdbm-dev
+      become: yes
+    - name: Download rbenv install shell script
+      get_url:
+        url: https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer
+        dest: /home/deploy/rbenv-installer.sh
+        mode: "0755"
+        group: deploy
+        owner: deploy
+      become: yes
+    - name: Execute rbenv install shell script
+      command: bash /home/deploy/rbenv-installer.sh
+      become_user: deploy
+    - name: setup bash environment
+      lineinfile:
+        path: /home/deploy/.bashrc
+        line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
+    - name: rbenv load automatically
+      lineinfile:
+        path: /home/deploy/.bashrc
+        line: 'eval "$(rbenv init -)"'

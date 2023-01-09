@@ -7,20 +7,24 @@
     - ruby_version: 2.5.8
 
   tasks:
-    - name: Install software-properties-common
+    # - name: Install software-properties-common
+    #   apt:
+    #     name: software-properties-common
+    #     state: present
+    #     update_cache: yes
+    #   become: yes
+    # - name: Add ppa ansible
+    #   apt_repository:
+    #     repo: ppa:ansible/ansible
+    #   become: yes
+    # - name: Install ansible
+    #   apt:
+    #     name: ansible
+    #     state: present
+    #     update_cache: yes
+    #   become: yes
+    - name: Update apt cache
       apt:
-        name: software-properties-common
-        state: present
-        update_cache: yes
-      become: yes
-    - name: Add ppa ansible
-      apt_repository:
-        repo: ppa:ansible/ansible
-      become: yes
-    - name: Install ansible
-      apt:
-        name: ansible
-        state: present
         update_cache: yes
       become: yes
     - name: Install dependency library

@@ -72,3 +72,15 @@
       when: ruby_installed.rc == 1
     # - name: print out
     #   debug: msg={{ ruby_installed }}
+    # - name: nginx | add nginx ppa repository
+      # apt_repository:
+        # repo: ppa:nginx/stable
+      # become: yes
+    - name: nginx | install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      become: yes
+    # TODO: install passenger module
+    # TODO: setup nginx site

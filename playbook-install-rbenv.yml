@@ -1,11 +1,26 @@
 -
   name: Install rbenv
   hosts: target1
+
+  vars:
+    # - rbenv_root: /home/deploy/.rbenv/bin
+    - ruby_version: 2.5.8
+
   tasks:
-    - name: Ping test
-      ping:
-    - name: Run the equivalent of "apt-get update"
+    - name: Install software-properties-common
       apt:
+        name: software-properties-common
+        state: present
+        update_cache: yes
+      become: yes
+    - name: Add ppa ansible
+      apt_repository:
+        repo: ppa:ansible/ansible
+      become: yes
+    - name: Install ansible
+      apt:
+        name: ansible
+        state: present
         update_cache: yes
       become: yes
     - name: Install dependency library
@@ -25,7 +40,7 @@
         - libffi-dev
         - libgdbm-dev
       become: yes
-    - name: Download rbenv install shell script
+    - name: rbenv | download install shell script
       get_url:
         url: https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer
         dest: /home/deploy/rbenv-installer.sh
@@ -33,14 +48,23 @@
         group: deploy
         owner: deploy
       become: yes
-    - name: Execute rbenv install shell script
+    - name: rbenv | install shell script
       command: bash /home/deploy/rbenv-installer.sh
       become_user: deploy
     - name: setup bash environment
       lineinfile:
         path: /home/deploy/.bashrc
         line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
-    - name: rbenv load automatically
+    - name: rbenv | load automatically
       lineinfile:
         path: /home/deploy/.bashrc
         line: 'eval "$(rbenv init -)"'
+    - name: rbenv | check ruby version installed
+      shell: /home/deploy/.rbenv/bin/rbenv versions | grep {{ ruby_version }}
+      register: ruby_installed
+      ignore_errors: true
+    - name: rbenv | install ruby 2.5.8
+      shell: /home/deploy/.rbenv/bin/rbenv install 2.5.8
+      when: ruby_installed.rc == 1
+    # - name: print out
+    #   debug: msg={{ ruby_installed }}

@@ -1,0 +1,14 @@
+---
+- name: "Install nginx"
+  hosts: target
+  tasks:
+    - name: "Install nginx"
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+      become: true
+    # - name: print out
+    #   debug: msg={{ ruby_installed }}
+    # TODO: install passenger module
+    # TODO: setup nginx site

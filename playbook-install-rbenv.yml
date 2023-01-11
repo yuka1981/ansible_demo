@@ -1,86 +1,58 @@
--
-  name: Install rbenv
-  hosts: target1
-
+---
+- name: "Install rbenv"
+  hosts: target
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ rbenv_path }}"
   vars:
-    # - rbenv_root: /home/deploy/.rbenv/bin
-    - ruby_version: 2.5.8
-
+    ruby_version: "2.5.8"
+    bashrc: "/home/deploy/.bashrc"
+    rbenv_path: "/home/deploy/.rbenv/bin/"
   tasks:
-    # - name: Install software-properties-common
-    #   apt:
-    #     name: software-properties-common
-    #     state: present
-    #     update_cache: yes
-    #   become: yes
-    # - name: Add ppa ansible
-    #   apt_repository:
-    #     repo: ppa:ansible/ansible
-    #   become: yes
-    # - name: Install ansible
-    #   apt:
-    #     name: ansible
-    #     state: present
-    #     update_cache: yes
-    #   become: yes
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-      become: yes
     - name: Install dependency library
-      apt:
+      ansible.builtin.apt:
         pkg:
-        - git
-        - curl
-        - libssl-dev
-        - libreadline-dev
-        - zlib1g-dev
-        - autoconf
-        - bison
-        - build-essential
-        - libyaml-dev
-        - libreadline-dev
-        - libncurses5-dev
-        - libffi-dev
-        - libgdbm-dev
-      become: yes
-    - name: rbenv | download install shell script
-      get_url:
+          - git
+          - curl
+          - libssl-dev
+          - libreadline-dev
+          - zlib1g-dev
+          - autoconf
+          - bison
+          - build-essential
+          - libyaml-dev
+          - libreadline-dev
+          - libncurses5-dev
+          - libffi-dev
+          - libgdbm-dev
+        update_cache: true
+      become: true
+    - name: "Download install shell script"
+      ansible.builtin.get_url:
         url: https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer
         dest: /home/deploy/rbenv-installer.sh
         mode: "0755"
         group: deploy
         owner: deploy
-      become: yes
-    - name: rbenv | install shell script
-      command: bash /home/deploy/rbenv-installer.sh
-      become_user: deploy
-    - name: setup bash environment
-      lineinfile:
-        path: /home/deploy/.bashrc
-        line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
-    - name: rbenv | load automatically
-      lineinfile:
-        path: /home/deploy/.bashrc
-        line: 'eval "$(rbenv init -)"'
-    - name: rbenv | check ruby version installed
-      shell: /home/deploy/.rbenv/bin/rbenv versions | grep {{ ruby_version }}
+      register: rbenv_installer_file
+      ignore_errors: true
+      become: true
+    - name: "Install shell script"
+      ansible.builtin.command: bash /home/deploy/rbenv-installer.sh
+      register: rbenv_install_status
+      when: rbenv_installer_file.msg | regex_search("^OK")
+      ignore_errors: true
+    - name: "Setup rbenv environment in the bashrc file"
+      ansible.builtin.blockinfile:
+        path: "{{ bashrc }}"
+        block: |
+          export PATH="$HOME/.rbenv/bin:$PATH"
+          eval "$(rbenv init -)"
+      when: rbenv_install_status.rc == 0
+    - name: "Check ruby version installed"
+      ansible.builtin.shell: "rbenv versions | grep {{ ruby_version }}"
       register: ruby_installed
       ignore_errors: true
-    - name: rbenv | install ruby 2.5.8
-      shell: /home/deploy/.rbenv/bin/rbenv install 2.5.8
+      when: rbenv_install_status.rc == 0
+    - name: "Install ruby 2.5.8"
+      ansible.builtin.command: "{{ rbenv }} install 2.5.8"
       when: ruby_installed.rc == 1
-    # - name: print out
-    #   debug: msg={{ ruby_installed }}
-    # - name: nginx | add nginx ppa repository
-      # apt_repository:
-        # repo: ppa:nginx/stable
-      # become: yes
-    - name: nginx | install nginx
-      apt:
-        name: nginx
-        state: present
-        update_cache: yes
-      become: yes
-    # TODO: install passenger module
-    # TODO: setup nginx site

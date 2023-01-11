@@ -1,0 +1,22 @@
+---
+- name: "Install Ansible"
+  hosts: target
+  tasks:
+    - name: "Install software-properties-common"
+      ansible.builtin.apt:
+        name: software-properties-common
+        state: present
+        update_cache: true
+      become: true
+    - name: "Add ppa ansible"
+      ansible.builtin.apt_repository:
+        repo: ppa:ansible/ansible
+      become: true
+    - name: "Install ansible"
+      ansible.builtin.apt:
+        name: ansible
+        state: present
+        update_cache: true
+      become: true
+    # - name: print out
+    #   debug: msg={{ ruby_installed }}
